@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { FaSun, FaMoon, FaCheckCircle } from 'react-icons/fa';  // Import FaCheckCircle
-import './App.css';
+import TaskList from './components/TaskListTemp';
+import Modal from './components/Modal';
+import ThemeToggle from './components/ThemeToggle';
+import './styles/App.css';
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [darkMode, setDarkMode] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [expandedTask, setExpandedTask] = useState(null);
 
   useEffect(() => {
     document.body.className = darkMode ? 'bg-gray-900' : 'bg-white';
@@ -18,37 +22,50 @@ function App() {
 
   const handleAddTask = () => {
     if (inputValue.trim()) {
-      setTasks([...tasks, inputValue]);
-      setInputValue('');  
+      setTasks([...tasks, { text: inputValue, id: Date.now(), isDeleting: false }]);
+      setInputValue('');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
     }
   };
 
-  const handleDeleteTask = (index) => {
-    const newTasks = tasks.filter((_, i) => i !== index);
-    setTasks(newTasks);
+  const handleDeleteTask = (id) => {
+    setTasks(tasks.map(task =>
+      task.id === id ? { ...task, isDeleting: true } : task
+    ));
+
+    setTimeout(() => {
+      setTasks(tasks.filter((task) => task.id !== id));
+      setShowDelete(true);
+      setTimeout(() => setShowDelete(false), 2000);
+    }, 500); // Match this duration with the CSS animation time
   };
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
-  }
+  };
+
+  const handleExpandTask = (task) => {
+    setExpandedTask(task);
+  };
+
+  const closeModal = () => {
+    setExpandedTask(null);
+  };
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'} flex flex-col items-center justify-center p-4 relative`}>
-      {/* Theme Toggle */}
-      <button
-        onClick={toggleTheme}
-        className="absolute top-4 right-4 text-2xl focus:outline-none"
-      >
-        {darkMode ? <FaSun /> : <FaMoon />}
-      </button>
+      <ThemeToggle darkMode={darkMode} toggleTheme={toggleTheme} />
 
-      {/* Success Message */}
       {showSuccess && (
         <div className="absolute top-4 text-center text-green-500 success-message">
-          <FaCheckCircle className="inline mr-2" />
           Task Successfully Added!
+        </div>
+      )}
+
+      {showDelete && (
+        <div className="absolute top-4 text-center text-red-500 delete-message">
+          Task Deleted!
         </div>
       )}
 
@@ -63,27 +80,22 @@ function App() {
         />
         <button
           onClick={handleAddTask}
-          className={`${darkMode ? 'bg-blue-600' : 'bg-blue-500'} w-full p-2 mb-4 rounded hover:bg-blue-700`}
+          className={`${darkMode ? 'bg-blue-600' : 'bg-blue-500'} w-full p-2 mb-4 rounded hover:bg-blue-700 transition-transform transform active:scale-95`}
         >
           Add Task
         </button>
       </div>
-      <ul className="w-full max-w-xs">
-        {tasks.map((task, index) => (
-          <li
-            key={index}
-            className={`flex justify-between items-center ${darkMode ? 'bg-gray-800' : 'bg-gray-200'} p-2 mb-2 rounded`}
-          >
-            {task}
-            <button
-              onClick={() => handleDeleteTask(index)}
-              className="bg-red-600 p-1 rounded hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      <TaskList
+        tasks={tasks}
+        handleDeleteTask={handleDeleteTask}
+        handleExpandTask={handleExpandTask}
+        darkMode={darkMode}
+      />
+
+      {expandedTask && (
+        <Modal expandedTask={expandedTask} closeModal={closeModal} darkMode={darkMode} />
+      )}
     </div>
   );
 }
