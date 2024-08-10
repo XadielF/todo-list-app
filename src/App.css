@@ -44,3 +44,12 @@ li button {
 li button:hover {
   background-color: #ff1a1a;
 }
+
+body {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; transform: translateY(-10px); }
+  10%, 90% { opacity: 1; transform: translateY(0); }  
+}
